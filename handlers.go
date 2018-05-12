@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -15,11 +16,6 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func UserIndex(w http.ResponseWriter, r *http.Request) {
-	users := Users{
-		User{FirstName: "Subject1"},
-		User{FirstName: "Subject2"},
-	}
-
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(users); err != nil {
@@ -29,8 +25,27 @@ func UserIndex(w http.ResponseWriter, r *http.Request) {
 
 func UserGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	userID := vars["userId"]
-	fmt.Fprintln(w, "User show:", userID)
+	var userId int
+	var err error
+	if userId, err = strconv.Atoi(vars["userId"]); err != nil {
+		panic(err)
+	}
+	user := RepoFindUser(userId)
+	if user.Id > 0 {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(user); err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	// If we didn't find it, 404
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusNotFound)
+	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
+		panic(err)
+	}
 }
 
 func UserCreate(w http.ResponseWriter, r *http.Request) {
