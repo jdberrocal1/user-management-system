@@ -1,13 +1,9 @@
 package main
 
-import (
-	"log"
-	"net/http"
-)
-
 func main() {
+	a := App{}
 
-	router := NewRouter()
+	a.Initialize("root", "", "user_management")
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	a.Run(":8080")
 }
